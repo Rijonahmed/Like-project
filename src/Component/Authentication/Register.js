@@ -1,55 +1,74 @@
 import React from 'react';
-import { useForm } from "react-hook-form";
-import { useSignInWithEmailAndPassword } from 'react-firebase-hooks/auth';
+import { useForm } from 'react-hook-form';
+import { useCreateUserWithEmailAndPassword, useUpdateProfile } from 'react-firebase-hooks/auth';
 import auth from '../../firebase.init';
-
-import { Link, useNavigate } from 'react-router-dom';
 import Loading from '../Shared/Loading';
-const LogIn = () => {
+import { Link, useNavigate } from 'react-router-dom';
+
+const Register = () => {
+  const navigate = useNavigate();
+
   const { register, formState: { errors }, handleSubmit } = useForm();
 
-  const navigate = useNavigate();
-  // const location = useLocation();
-
-  // let form = location.state?.from?.pathname || "/";
-
   const [
-    signInWithEmailAndPassword,
+    createUserWithEmailAndPassword,
     user,
     loading,
     error,
-  ] = useSignInWithEmailAndPassword(auth);
+  ] = useCreateUserWithEmailAndPassword(auth);
+
+  const [updateProfile, updating, updateError] = useUpdateProfile(auth);
+
+  const onSubmit = async data => {
+    await createUserWithEmailAndPassword(data.email, data.password);
+    await updateProfile({ displayName: data.name });
+
+  };
+
+
 
   if (user) {
-    // navigate(form, { replace: true });
     navigate('/myHome')
   }
 
-
-  if (loading) {
+  if (loading || updating) {
     return <Loading></Loading>
   }
+
   let signInError;
 
-  if (error) {
+  if (error || updateError) {
     signInError = <p className='text-red-500'>{error.message}</p>
 
   }
-
-
-  const onSubmit = data => {
-
-    signInWithEmailAndPassword(data.email, data.password)
-
-  };
   return (
     <div>
-      <div className='flex justify-center items-center'>
+      <div className='flex justify-center'>
         <div className="card w-96 bg-base-100 shadow-xl">
           <div className="card-body">
-            <h2 className="text-center text-2xl font-bold">Log In</h2>
+            <h2 className="text-center text-2xl font-bold">Sign Up</h2>
             <form onSubmit={handleSubmit(onSubmit)}>
 
+              <div className="form-control w-full max-w-xs">
+                <label className="label">
+                  <span className="label-text">Name</span>
+
+                </label>
+                <input type="name" placeholder="Name" className="input input-bordered w-full max-w-xs"
+                  {...register("name", {
+                    required: {
+                      value: true,
+                      message: 'name is required'
+                    }
+                  })}
+
+                />
+                <label className="label">
+                  {errors.email?.type === 'required' && <span className="label-text-alt text-red-600">{errors.name.massage}</span>}
+
+
+                </label>
+              </div>
               <div className="form-control w-full max-w-xs">
                 <label className="label">
                   <span className="label-text">Email</span>
@@ -85,39 +104,43 @@ const LogIn = () => {
                   {...register("password", {
                     required: {
                       value: true,
-                      massage: 'password is required'
+                      message: 'password is required'
                     },
                     minLength: {
                       value: 6,
-                      massage: 'six chareacter '
+                      message: 'six chareacter '
                     }
                   })}
 
                 />
                 <label className="label">
-                  {errors.password?.type === 'required' && <span className="label-text-alt text-red-600">{errors.password.massage}</span>}
-                  {errors.password?.type === 'minLength' && <span className="label-text-alt text-red-600">{errors.password.massage}</span>}
+                  {errors.password?.type === 'required' && <span className="label-text-alt text-red-600">{errors.password.message}</span>}
+                  {errors.password?.type === 'minLength' && <span className="label-text-alt text-red-600">{errors.password.message}</span>}
 
 
                 </label>
               </div>
 
-
               {signInError}
 
-              <input className='btn w-full max-w-xs' type="submit" value='Log In' />
+
+              <input className='btn w-full max-w-xs' type="submit" value='Sign Up' />
             </form>
 
-            <p><small>New to Moto Parts Factory site <Link className='text-primary' to="/register">Create a new Account</Link></small></p>
+            <p><small>Already have an account <Link
+              className='text-primary' to="/logIn">Log in Account</Link></small></p>
+
+
+
+
+
 
 
           </div>
         </div>
-
       </div>
-
     </div>
   );
 };
 
-export default LogIn;
+export default Register;
